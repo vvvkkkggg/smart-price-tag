@@ -56,7 +56,7 @@
 
 <table>
 <tr>
-    <td>
+    <td style="width: 50% ;">
         <img src="./img/photo_2023-03-03_23-14-35.jpg">
     </td>
     <td>
@@ -74,7 +74,7 @@
 
 <table>
 <tr>
-    <td style="width: 50% ;">
+    <td style="width: 50%;">
         <img src="./img/photo_2023-03-03_23-14-34.jpg">
     </td>
     <td>

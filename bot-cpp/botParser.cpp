@@ -1,15 +1,27 @@
-#include <string>
 #include <tgbot/tgbot.h>
+#include "json.hpp"
+#include "botConsts.h"
+#include "botParser.h"
 
-namespace CallbackParser {
-    std::string dumpInlineDumpButtonCallbackData(std::string callbackData) {
-        return callbackData;
-    }
 
-    std::string loadInlineDumpButtonCallbackData(std::string callbackData) {
-        if (StringTools::startsWith(callbackData, "dump_")) {
-//        std::vector<std::string> dest; StringTools::split(callbackData, "dump_", &dest);
-        }
-        return callbackData;
-    }
+std::string CallbackParser::dumpInlineDumpCallbackButton(std::string dumpStr) {
+    return "dump_" + dumpStr;
 }
+
+std::string CallbackParser::loadInlineDumpCallbackButton(std::string dumpStr) {
+    if (!StringTools::startsWith(dumpStr, BotConst::DUMP_KEY)) {
+        return BotConst::EMPTY_DATA;
+    }
+
+    return dumpStr.substr(std::strlen(BotConst::DUMP_KEY.c_str()));
+}
+
+//    BotStructure::Tag *loadTagFromSetCommand(std::string tagStr) {
+//        std::vector<std::string> tagParts = BotTool::split(tagStr, " ");
+//        if (tagParts.size() < 3 + 1) {
+//            return nullptr;
+//        }
+//
+////        return BotStructure::createTag()
+//        return nullptr;
+//    }

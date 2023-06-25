@@ -9,3 +9,10 @@ struct Tag *BotStructure::createTag(int screenId, int price, std::string name) {
     tag->name = name;
     return tag;
 }
+
+struct TagConfirmation *BotStructure::createTagConfirmation(int id, std::string answer) {
+    struct TagConfirmation *tagConfirmation = new struct TagConfirmation();
+    tagConfirmation->id = id;
+    tagConfirmation->answer = answer;
+    return tagConfirmation;
+}

@@ -5,5 +5,6 @@
 
 namespace BotTool {
     std::vector<std::string> split (const std::string &s, char delim);
+    template <typename T> std::string joinVector(const std::vector<T> elements, const std::string delim);
 }
 #endif

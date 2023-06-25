@@ -47,6 +47,15 @@ namespace BotConst {
 //    auto DUMP_SUCCESSFUL_MESSAGE = [](const std::string s) {
 //        return "Начали подготавливать ценники в формате '" + s + "', скоро пришлем их Вам!";
 //    };
+
+    // Inline buttons for set tag
+
+    const std::string SET_YES = "Да!";
+    const std::string SET_NO = "Нет";
+
+    const std::vector<std::vector<std::string>> inlineButtonsForSetConfirmation = {{SET_YES, SET_NO}};
+
+    const std::string SET_KEY = "set_";
 }
 
 #endif

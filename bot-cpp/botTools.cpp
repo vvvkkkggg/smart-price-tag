@@ -4,28 +4,32 @@
 #include "botConsts.h"
 #include "botTools.h"
 
-std::vector<std::string> BotTool::split (const std::string &s, char delim) {
+std::vector<std::string> BotTool::split(const std::string &s, char delim) {
     std::vector<std::string> result;
-    std::stringstream ss (s);
+    std::stringstream ss(s);
     std::string item;
 
-    while (getline (ss, item, delim)) {
-        result.push_back (item);
+    while (getline(ss, item, delim)) {
+        result.push_back(item);
     }
 
     return result;
 }
 
-const std::string BotConst::showTagsNumbersText(const std::vector<int> tagsIds) {
+template<typename T>
+std::string BotTool::joinVector(const std::vector<T> elements, const std::string delim) {
     std::ostringstream oss;
-    if (!tagsIds.empty()) {
+    if (!elements.empty()) {
         std::copy(
-                tagsIds.begin(),
-                tagsIds.end() - 1,
-                std::ostream_iterator<int>(oss, ", ")
+                elements.begin(),
+                elements.end(),
+                std::ostream_iterator<T>(oss, delim.c_str())
         );
-        oss << tagsIds.back();
+        oss << elements.back();
     }
+    return oss.str();
+}
 
-    return BotConst::SHOW_TAGS_NUMBERS_TEXT + oss.str();
+const std::string BotConst::showTagsNumbersText(const std::vector<int> tagsIds) {
+    return BotConst::SHOW_TAGS_NUMBERS_TEXT + BotTool::joinVector(tagsIds, "");
 }

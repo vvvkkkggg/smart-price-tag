@@ -13,7 +13,8 @@ TgBot::InlineKeyboardButton::Ptr BotKeyboard::inlineKeyboardBuilder(std::string 
     return button;
 }
 
-TgBot::ReplyKeyboardMarkup::Ptr BotKeyboard::getReplayKeyboard(const std::vector<std::vector<std::string>> buttonsText) {
+TgBot::ReplyKeyboardMarkup::Ptr
+BotKeyboard::getReplayKeyboard(const std::vector<std::vector<std::string>> buttonsText) {
     TgBot::ReplyKeyboardMarkup::Ptr keyboard(new TgBot::ReplyKeyboardMarkup);
 
     std::for_each(
@@ -37,17 +38,26 @@ TgBot::ReplyKeyboardMarkup::Ptr BotKeyboard::getReplayKeyboard(const std::vector
 }
 
 TgBot::InlineKeyboardMarkup::Ptr
-BotKeyboard::getInlineKeyboard(const std::vector<std::vector<std::string>> buttonsText, std::string getCallback(std::string)) {
+BotKeyboard::getInlineKeyboard(const std::vector<std::vector<std::string>> buttonsText,
+                               std::string getCallback(std::string)) {
+    return BotKeyboard::getInlineKeyboard(buttonsText, getCallback, [](int x) {return *new std::string("");}, 0);
+}
+
+TgBot::InlineKeyboardMarkup::Ptr BotKeyboard::getInlineKeyboard(
+        const std::vector<std::vector<std::string>> buttonsText, std::string getCallback(std::string),
+        std::string addSuffix(int), int id
+) {
     TgBot::InlineKeyboardMarkup::Ptr keyboard(new TgBot::InlineKeyboardMarkup);
 
     std::for_each(
             buttonsText.begin(),
             buttonsText.end(),
-            [&keyboard, &getCallback](std::vector<std::string> layer) {
+            [&keyboard, &getCallback, &id, &addSuffix](std::vector<std::string> layer) {
                 std::vector<TgBot::InlineKeyboardButton::Ptr> buttons;
 
-                std::for_each(layer.begin(), layer.end(), [&buttons, &getCallback](auto &n) {
-                    buttons.push_back(BotKeyboard::inlineKeyboardBuilder(n, getCallback(n)));
+                std::for_each(layer.begin(), layer.end(), [&buttons, &getCallback, &addSuffix, &id](auto &n) {
+                    std::string callBackData = getCallback(n) + addSuffix(id);
+                    buttons.push_back(BotKeyboard::inlineKeyboardBuilder(n, callBackData));
                 });
 
                 keyboard->inlineKeyboard.push_back(buttons);

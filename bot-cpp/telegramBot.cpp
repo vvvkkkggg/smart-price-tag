@@ -1,47 +1,81 @@
 #include <cstdio>
+#include <tgbot/tgbot.h>
+#include <string>
+#include <vector>
 #include "json.hpp"
-
 #include "botConsts.h"
 #include "botKeyboards.h"
-#include "botParser.cpp"
+#include "botParser.h"
 
-#include <tgbot/tgbot.h>
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <string>
 
 int main() {
     TgBot::Bot bot("6144696073:AAERZzFet5rgILChIMfz_aEiQ05nXDI6Ab4");
 
-    TgBot::InlineKeyboardMarkup::Ptr inlineDumpKeyboard(new TgBot::InlineKeyboardMarkup);
-    std::vector<TgBot::InlineKeyboardButton::Ptr> inlineDumpButtons;
+    TgBot::ReplyKeyboardMarkup::Ptr menuKeyboard = BotKeyboard::getReplayKeyboard(BotConst::menuButtonsName);
+    TgBot::InlineKeyboardMarkup::Ptr inlineDumpKeyboard = BotKeyboard::getInlineKeyboard(
+            BotConst::inlineButtonsForDump, CallbackParser::dumpInlineDumpCallbackButton
+    );
 
-    std::for_each(
-            BotConst::inlineButtonsForDump.begin(),
-            BotConst::inlineButtonsForDump.end(),
-            [&inlineDumpButtons](auto &n) {
-                // std::string s = dumpInlineDumpButtonCallbackData(n);
-                inlineDumpButtons.push_back(BotKeyboard::inlineKeyboardBuilder(
-                        n, n));
-            });
+    bot.getEvents().onCommand("start", [&bot, &menuKeyboard](const TgBot::Message::Ptr &message) {
+        bot.getApi().sendMessage(message->chat->id, message->text, false, 0, menuKeyboard);
+    });
 
-    inlineDumpKeyboard->inlineKeyboard.push_back(inlineDumpButtons);
+    bot.getEvents().onCommand("set", [&bot](const TgBot::Message::Ptr &message) {
+        Tag *tag = CommandParser::loadTagFromSetCommand(message->text);
+        if (tag == nullptr) {
+            bot.getApi().sendMessage(message->chat->id, "отправил не то, давай по новой");
+            return ;
+        }
 
-    bot.getEvents().onCommand("start", [&bot](const TgBot::Message::Ptr &message) {
-        bot.getApi().sendMessage(message->chat->id, message->text, false, 0, BotKeyboard::menuKeyboard);
+        int x = 1;
+
+        TgBot::InlineKeyboardMarkup::Ptr inlineSetKeyboard = BotKeyboard::getInlineKeyboard(
+                BotConst::inlineButtonsForSetConfirmation,
+                CallbackParser::dumpInlineSetCallbackButton,
+                CallbackParser::dumpInlineSetTagIdCallbackButton,
+                x
+        );
+
+        bot.getApi().sendMessage(message->chat->id,
+                "Вы хотите на экран " +
+                std::to_string(tag->screenId) +
+                " выставить \"" +
+                tag->name +
+                "\" за " +
+                std::to_string(tag->price) +
+                " рублей.\n\n" +
+                "Подтверждаете это действие?", false, 0, inlineSetKeyboard);
+    });
+
+    bot.getEvents().onCommand("switch", [&bot](const TgBot::Message::Ptr &message) {
+        bot.getApi().sendMessage(message->chat->id, "поменял режим, потом реальный ответ с сервера будет");
+    });
+
+    bot.getEvents().onCommand("drop", [&bot](const TgBot::Message::Ptr &message) {
+        bot.getApi().sendMessage(message->chat->id, "удалили сервер из бедешки");
+    });
+
+    bot.getEvents().onUnknownCommand([&bot, &menuKeyboard](const TgBot::Message::Ptr &message) {
+        bot.getApi().sendMessage(message->chat->id, "Неизвестная команда, введите `/`, чтобы получить список доступных команд.", false, 0, menuKeyboard, "Markdown");
     });
 
     bot.getEvents().onCallbackQuery([&bot](TgBot::CallbackQuery::Ptr callbackQuery) {
 
-        std::string dumpTags = CallbackParser::loadInlineDumpButtonCallbackData(callbackQuery->data);
-        if (dumpTags != BotConst::EMPTY_DATA) {
+        std::string *dumpTags = CallbackParser::loadInlineDumpCallbackButton(callbackQuery->data);
+        if (dumpTags != nullptr) {
             bot.getApi().answerCallbackQuery(callbackQuery->id, "Успешный выбор!");
-            bot.getApi().editMessageText(BotConst::DUMP_SUCCESSFUL_MESSAGE(dumpTags), callbackQuery->message->chat->id, callbackQuery->message->messageId);
+            bot.getApi().editMessageText(/*BotConst::DUMP_SUCCESSFUL_MESSAGE(dumpTags)*/ "fd", callbackQuery->message->chat->id, callbackQuery->message->messageId);
             // add to queue to load
 //            bot.getApi().sendMessage(callbackQuery->message->chat->id, BotConst::DUMP_SUCCESSFUL_MESSAGE(dumpTags));
             return ;
+        }
+
+        struct TagConfirmation *tagConfirmation = CallbackParser::loadInlineSetCallbackButton(callbackQuery->data);
+        if (tagConfirmation != nullptr) {
+            bot.getApi().answerCallbackQuery(callbackQuery->id, "Отправили на сервер!");
+            bot.getApi().editMessageText(/*BotConst::DUMP_SUCCESSFUL_MESSAGE(dumpTags)*/ "fd", callbackQuery->message->chat->id, callbackQuery->message->messageId);
+
+            return;
         }
 
         bot.getApi().sendMessage(callbackQuery->message->chat->id, "hui");

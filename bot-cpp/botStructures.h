@@ -8,7 +8,13 @@ struct Tag {
     std::string name;
 };
 
+struct TagConfirmation {
+    int id;
+    std::string answer;
+};
+
 namespace BotStructure {
     struct Tag *createTag(int screenId, int price, std::string name);
+    struct TagConfirmation *createTagConfirmation(int Id, std::string answer);
 }
 #endif

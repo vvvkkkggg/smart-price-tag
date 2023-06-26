@@ -4,6 +4,12 @@
 #include "botConsts.h"
 #include "botTools.h"
 
+void BotTool::sendMessage(TgBot::Bot &bot, boost::variant<std::int64_t, std::string> chatId,
+                          const std::string &text,
+                          TgBot::GenericReply::Ptr replyMarkup) {
+    bot.getApi().sendMessage(chatId, text, false, 0, replyMarkup, "Markdown");
+}
+
 std::vector<std::string> BotTool::split(const std::string &s, char delim) {
     std::vector<std::string> result;
     std::stringstream ss(s);
@@ -31,5 +37,5 @@ std::string BotTool::joinVector(const std::vector<T> elements, const std::string
 }
 
 const std::string BotConst::showTagsNumbersText(const std::vector<int> tagsIds) {
-    return BotConst::SHOW_TAGS_NUMBERS_TEXT + BotTool::joinVector(tagsIds, "");
+    return BotConst::SHOW_TAGS_NUMBERS_TEXT + BotTool::joinVector(tagsIds, " ");
 }

@@ -3,6 +3,7 @@
 #include <tgbot/tgbot.h>
 #include <vector>
 #include <string>
+#include "json.hpp"
 
 namespace BotTool {
     void sendMessage(TgBot::Bot &bot, boost::variant<std::int64_t, std::string> chatId,
@@ -11,4 +12,5 @@ namespace BotTool {
     std::vector<std::string> split (const std::string &s, char delim);
     template <typename T> std::string joinVector(const std::vector<T> elements, const std::string delim);
 }
+
 #endif

@@ -1,6 +1,7 @@
-#include <tgbot/tgbot.h>
 #include <vector>
+#include <string>
 #include <boost/algorithm/string/join.hpp>
+#include <tgbot/tgbot.h>
 #include "json.hpp"
 #include "botConsts.h"
 #include "botParser.h"
@@ -45,6 +46,18 @@ struct TagConfirmation *CallbackParser::loadInlineSetCallbackButton(std::string 
     return BotStructure::createTagConfirmation(std::stoi(answerParts[2]), answerParts[1]);
 }
 
+std::string CallbackParser::dumpInlineServerDataCallbackButton(std::string setStr) {
+    return "server_" + setStr;
+}
+
+std::string *CallbackParser::loadInlineServerDataCallbackButton(std::string setStr) {
+    if (!StringTools::startsWith(setStr, "server_")) {
+        return nullptr;
+    }
+
+    return new std::string(BotTool::split(setStr, '_')[1]);
+}
+
 Tag *CommandParser::loadTagFromSetCommand(std::string tagStr) {
     std::vector<std::string> tagParts = BotTool::split(tagStr, ' ');
 
@@ -60,4 +73,20 @@ Tag *CommandParser::loadTagFromSetCommand(std::string tagStr) {
     } catch (std::exception &err) {
         return nullptr;
     }
+}
+
+std::string JsonParser::dumpUserToString(User *user) {
+    return nlohmann::json{{"host",      user->host},
+                          {"secretKey", user->secretKey},
+                          {"node",      user->node}}.dump();
+}
+
+struct User *JsonParser::loadUserFromStringJson(std::string j) {
+    auto _j = nlohmann::json::parse(j);
+    return BotStructure::createUser(
+            _j["host"],
+            _j["secretKey"],
+            std::stoi(to_string(_j["node"])
+            )
+    );
 }

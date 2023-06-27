@@ -13,8 +13,16 @@ struct TagConfirmation {
     std::string answer;
 };
 
+struct User {
+    std::string host;
+    std::string secretKey;
+    int node;
+};
+
 namespace BotStructure {
     struct Tag *createTag(int screenId, int price, std::string name);
     struct TagConfirmation *createTagConfirmation(int Id, std::string answer);
+    struct User *createUser(std::string host, std::string secretKey, int node);
 }
+
 #endif

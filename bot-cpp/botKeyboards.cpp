@@ -40,7 +40,7 @@ BotKeyboard::getReplayKeyboard(const std::vector<std::vector<std::string>> butto
 TgBot::InlineKeyboardMarkup::Ptr
 BotKeyboard::getInlineKeyboard(const std::vector<std::vector<std::string>> buttonsText,
                                std::string getCallback(std::string)) {
-    return BotKeyboard::getInlineKeyboard(buttonsText, getCallback, [](int x) {return *new std::string("");}, 0);
+    return BotKeyboard::getInlineKeyboard(buttonsText, getCallback, [](int x) { return *new std::string(""); }, 0);
 }
 
 TgBot::InlineKeyboardMarkup::Ptr BotKeyboard::getInlineKeyboard(

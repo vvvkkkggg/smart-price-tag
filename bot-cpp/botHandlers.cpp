@@ -11,22 +11,35 @@ TgBot::InlineKeyboardMarkup::Ptr inlineDumpKeyboard = BotKeyboard::getInlineKeyb
 
 auto redis = sw::redis::Redis("tcp://127.0.0.1:6379");
 
+#include <cstdio>
+
 void addStartCommandHandler(TgBot::Bot &bot) {
-
     bot.getEvents().onCommand("start", [&bot](const TgBot::Message::Ptr &message) {
-        if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
-            return ;
-        }
-        BotTool::sendMessage(bot, message->chat->id, "start???", menuKeyboard);
-    });
+        auto user = BotDB::getUser(redis, message->from->id);
 
+        if (!user || user->node != UserStates::NORMAL_WORK) {
+            BotDialog::dialogChainResponsibility(bot, redis, message);
+            return;
+        }
+
+        std::string text = "Привет! Мы работаем, твой сервер, который ты указал в последний раз, имеет следующие данные:\n\n"
+                           "*Сервер* - _%s_\n"
+                           "*Секретный ключ* - _%s_\n\n"
+                           "Если это неактуальные данные, то введите `/drop`.";
+
+        std::ostringstream result;
+        result << boost::format(text) % user->host % user->secretKey;
+
+        BotTool::sendMessage(bot, message->chat->id, result.str(), menuKeyboard);
+    });
 }
 
 void addSetCommandHandler(TgBot::Bot &bot) {
     bot.getEvents().onCommand("set", [&bot](const TgBot::Message::Ptr &message) {
         if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
-            return ;
+            return;
         }
+
         Tag *tag = CommandParser::loadTagFromSetCommand(message->text);
 
         if (tag == nullptr) {
@@ -40,8 +53,7 @@ void addSetCommandHandler(TgBot::Bot &bot) {
         TgBot::InlineKeyboardMarkup::Ptr inlineSetKeyboard = BotKeyboard::getInlineKeyboard(
                 BotConst::inlineButtonsForSetConfirmation,
                 CallbackParser::dumpInlineSetCallbackButton,
-                CallbackParser::dumpInlineSetTagIdCallbackButton,
-                x
+                CallbackParser::dumpInlineSetTagIdCallbackButton, x
         );
 
         std::ostringstream formatResult;
@@ -55,36 +67,42 @@ void addSetCommandHandler(TgBot::Bot &bot) {
 void addSwitchCommandHandler(TgBot::Bot &bot) {
     bot.getEvents().onCommand("switch", [&bot](const TgBot::Message::Ptr &message) {
         if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
-            return ;
+            return;
         }
-        bot.getApi().sendMessage(message->chat->id, "поменял режим, потом реальный ответ с сервера будет");
+
+        bot.getApi().sendMessage(message->chat->id,
+                                 "Поменяли режим где-то, потом реальный ответ с сервера будет!)");
     });
 }
 
 void addDropCommandHandler(TgBot::Bot &bot) {
     bot.getEvents().onCommand("drop", [&bot](const TgBot::Message::Ptr &message) {
-        if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
-            return ;
-        }
+//        if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
+//            return;
+//        }
 
-        bot.getApi().sendMessage(message->chat->id, "удалили сервер из бедешки");
+        int userId = message->from->id;
+        BotDB::updateUserNode(redis, userId, BotDB::getUser(redis, userId), UserStates::WAIT_HOST);
+        BotTool::sendMessage(bot, message->chat->id,
+                             "Мы отвязали текущий сервер от Вашего аккаунта. "
+                             "Если хотите добавить новый, просто пришлите URL сервера!");
     });
 }
 
 void addUnknownCommandHandler(TgBot::Bot &bot) {
     bot.getEvents().onUnknownCommand([&bot](const TgBot::Message::Ptr &message) {
         if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
-            return ;
+            return;
         }
 
-        bot.getApi().sendMessage(message->chat->id,
-                                 "Неизвестная команда, введите `/`, чтобы получить список доступных команд.", false, 0,
-                                 menuKeyboard, "Markdown");
+        BotTool::sendMessage(bot, message->chat->id,
+                             "Неизвестная команда, введите `/`, чтобы получить список доступных команд.", menuKeyboard);
     });
 }
 
 void addCallbackHandler(TgBot::Bot &bot) {
-    bot.getEvents().onCallbackQuery([&bot](TgBot::CallbackQuery::Ptr callbackQuery) {
+    bot.getEvents().onCallbackQuery([&bot](const TgBot::CallbackQuery::Ptr &callbackQuery) {
+
         std::string *dumpTags = CallbackParser::loadInlineDumpCallbackButton(callbackQuery->data);
         if (dumpTags != nullptr) {
             std::ostringstream formatResult;
@@ -101,10 +119,15 @@ void addCallbackHandler(TgBot::Bot &bot) {
 
         struct TagConfirmation *tagConfirmation = CallbackParser::loadInlineSetCallbackButton(callbackQuery->data);
         if (tagConfirmation != nullptr) {
-            // check yes/no answer for confirmation
-
             std::ostringstream result;
-            result << boost::format(BotConst::SET_SUCCESSFUL_MESSAGE) % tagConfirmation->id % "fsdfds" % 1;
+
+            if (tagConfirmation->answer == BotConst::SET_YES) {
+                result << boost::format(BotConst::SET_SUCCESSFUL_MESSAGE)
+                          % tagConfirmation->id % "я ничо не сохранил" % 1;
+            } else {
+                result << boost::format(BotConst::SET_UNSUCCESSFUL_MESSAGE)
+                          % tagConfirmation->id % "я ничо не сохранил" % 1;
+            }
 
             bot.getApi().answerCallbackQuery(callbackQuery->id, BotConst::SUCCESS_MESSAGE);
             bot.getApi().editMessageText(result.str(), callbackQuery->message->chat->id,
@@ -115,28 +138,35 @@ void addCallbackHandler(TgBot::Bot &bot) {
 
         std::string *serverDataConfirmation = CallbackParser::loadInlineServerDataCallbackButton(callbackQuery->data);
         if (serverDataConfirmation != nullptr) {
+            auto user = BotDB::getUser(redis, callbackQuery->from->id);
+            std::string answer;
+
             if (*serverDataConfirmation == BotConst::SET_YES) {
-                BotDB::updateUserNode(redis, callbackQuery->from->id, BotDB::getUser(redis, callbackQuery->from->id), UserStates::NORMAL_WORK);
-                BotTool::sendMessage(bot, callbackQuery->message->chat->id, "сохранили, четко");
+                BotDB::updateUserNode(redis, callbackQuery->from->id, user, UserStates::NORMAL_WORK);
+                answer = "Мы сохранили Ваши данные!";
             } else {
-                BotTool::sendMessage(bot, callbackQuery->message->chat->id, "жаль, давай снова, отправь хоста");
-                BotDB::updateUserNode(redis, callbackQuery->from->id, BotDB::getUser(redis, callbackQuery->from->id), UserStates::WAIT_HOST);
+                BotDB::updateUserNode(redis, callbackQuery->from->id, user, UserStates::WAIT_HOST);
+                answer = "Давайте начнем сначала, отправьте URL сервера!";
             }
+
+            bot.getApi().editMessageText(answer, callbackQuery->message->chat->id,
+                                         callbackQuery->message->messageId);
+            bot.getApi().answerCallbackQuery(callbackQuery->id, BotConst::SUCCESS_MESSAGE);
 
             return;
         }
-
-        bot.getApi().sendMessage(callbackQuery->message->chat->id, "hui");
     });
 }
 
 void addAnyMessageHandler(TgBot::Bot &bot) {
     bot.getEvents().onAnyMessage([&bot](const TgBot::Message::Ptr &message) {
-        if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
+        if (StringTools::startsWith(message->text, "/")) {
             return ;
         }
 
-        /* Check full user registration */
+        if (BotDialog::dialogChainResponsibility(bot, redis, message)) {
+            return;
+        }
 
         if (StringTools::startsWith(message->text, BotConst::SHOW_TAGS_NUMBERS)) {
             /* Send data to server */
@@ -148,9 +178,9 @@ void addAnyMessageHandler(TgBot::Bot &bot) {
             BotTool::sendMessage(bot, message->chat->id, BotConst::SET_TAGS_TEXT);
         } else if (StringTools::startsWith(message->text, BotConst::UPLOAD_TAGS)) {
             BotTool::sendMessage(bot, message->chat->id, BotConst::UPLOAD_TAGS_TEXT);
-        } else if (StringTools::startsWith(message->text, "/")) {
-            // что-то тут сделаю
-            BotTool::sendMessage(bot, message->chat->id, "Your message is: " + message->text);
+        } else {
+            BotTool::sendMessage(bot, message->chat->id,
+                                 "Мы стараемся не отвечать на неизвестный текст, поэтому как-то так..");
         }
     });
 }

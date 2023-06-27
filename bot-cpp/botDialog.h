@@ -13,8 +13,6 @@ enum UserStates {
 
 namespace BotDialog {
     bool dialogChainResponsibility(TgBot::Bot &bot, sw::redis::Redis &redis, const TgBot::Message::Ptr &message);
-
-    void changeUserState(int userId, int state);
 }
 
 #endif

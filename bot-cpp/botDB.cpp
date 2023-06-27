@@ -7,10 +7,7 @@
 struct User *BotDB::getUser(sw::redis::Redis &redis, int userId) {
     std::string userIdStringify = std::to_string(userId);
     auto s = redis.get(userIdStringify);
-    if (s.has_value()) {
-        return JsonParser::loadUserFromStringJson(s.value());
-    }
-    return nullptr;
+    return s.has_value() ? JsonParser::loadUserFromStringJson(s.value()) : nullptr;
 }
 
 struct User *BotDB::createUser(sw::redis::Redis &redis, int userId, struct User *user) {

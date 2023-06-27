@@ -5,7 +5,9 @@
 
 namespace BotDB {
     struct User* getUser(sw::redis::Redis &redis, int userId);
+
     struct User* createUser(sw::redis::Redis &redis, int userId, struct User *user);
+
     struct User* updateUserNode(sw::redis::Redis &redis, int userId, struct User *user, int node);
     struct User* updateUserHost(sw::redis::Redis &redis, int userId, struct User *user, std::string host);
     struct User* updateUserSecretKey(sw::redis::Redis &redis, int userId, struct User *user, std::string secretKey);

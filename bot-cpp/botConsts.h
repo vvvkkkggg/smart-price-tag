@@ -65,6 +65,8 @@ namespace BotConst {
                                                  "Подтверждаете это действие?";
     const std::string SET_SUCCESSFUL_MESSAGE = "На экран _%d_ установлен ценник "
                                                "с названием *\"%s\"* и с ценой - *%d* рублей.";
+    const std::string SET_UNSUCCESSFUL_MESSAGE = "Вы решили не устанавливать на _%d_ экран ценник "
+                                                 "с названием *\"%s\"* и с ценой - *%d* рублей.";
     const std::string SET_ERROR_MESSAGE = "Введенные данные некорректны..\n\n" + SET_TAGS_TEXT;
 }
 

@@ -1,49 +1,74 @@
-#include "request_entity.h"
+#include "security.h"
+#include "commands.h"
+#include "json.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <thread>
-#include <utility>
 #include <boost/asio.hpp>
 
-using boost::asio::ip::tcp;
 
-Entity parse_entity(const std::vector<char>& buffer);
-
-namespace {
-    constexpr size_t BUFFER_SIZE = 128;
-}
-
-void session(tcp::socket sock) {
+void session(boost::asio::ip::tcp::socket sock) {
     try {
         for (;;) {
-            std::vector<char> data_buffer(BUFFER_SIZE);
+            std::string data;
+            std::vector<char> dataBuffer(1024);
 
             boost::system::error_code error;
-            sock.read_some(boost::asio::buffer(data_buffer), error);
-            if (error == boost::asio::error::eof)
+
+            bool flag = true;
+            ssize_t read;
+
+            while ((read = sock.read_some(boost::asio::buffer(dataBuffer), error))) {
+                int i = 0;
+
+                if (flag) {
+                    std::string secretKey;
+                    while (dataBuffer[i] != '\n') { secretKey += dataBuffer[i++]; }
+                    i++;
+                    flag = false;
+
+                    if (!Security::isSecretKeyValid(secretKey)) {
+                        sock.close();
+                    }
+                }
+
+                while (i != read) {
+                    data += dataBuffer[i++];
+                }
+            }
+
+            sock.write_some(
+                    boost::asio::buffer(
+                            Command::runCommand(data)
+                    )
+            );
+
+            if (error == boost::asio::error::eof) {
                 break;
-            else if (error)
+            } else if (error) {
                 throw boost::system::system_error(error);
-
-            Entity ent = parse_entity(data_buffer);
-
-            sock.write_some(boost::asio::buffer("Got product name: " + ent.get_product_name() + + "\n"));
-            sock.write_some(boost::asio::buffer("Got product cost: " + ent.get_cost() + "\n"));
+            }
         }
-    }
-    catch (std::exception& e) {
+    } catch (std::exception &e) {
         std::cerr << "Exception in thread: " << e.what() << "\n";
     }
+
+    sock.close();
 }
 
-void server(boost::asio::io_context& io_context, unsigned short port) {
-    tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), port));
+[[noreturn]] void server(boost::asio::io_context &io_context, unsigned short port) {
+    boost::asio::ip::tcp::acceptor a(
+            io_context,
+            boost::asio::ip::tcp::endpoint(
+                    boost::asio::ip::tcp::v4(), port)
+    );
+
     for (;;) {
         std::thread(session, a.accept()).detach();
     }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     try {
         if (argc != 2) {
             std::cerr << "Usage: blocking_tcp_echo_server <port>\n";
@@ -54,7 +79,7 @@ int main(int argc, char* argv[]) {
 
         server(io_context, std::atoi(argv[1]));
     }
-    catch (std::exception& e) {
+    catch (std::exception &e) {
         std::cerr << "Exception: " << e.what() << "\n";
     }
 

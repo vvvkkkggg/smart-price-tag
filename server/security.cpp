@@ -1,5 +1,5 @@
-//
-// Created by alkosenko on 28/06/23.
-//
-
 #include "security.h"
+
+bool Security::isSecretKeyValid(const std::string& userSecretKey) {
+    return true;
+}

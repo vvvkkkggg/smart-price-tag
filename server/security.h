@@ -1,8 +1,10 @@
-//
-// Created by alkosenko on 28/06/23.
-//
+#ifndef SERVER_SMART_TAG_SECURITY_H
+#define SERVER_SMART_TAG_SECURITY_H
 
-#ifndef CPP_TEST_SECURITY_H
-#define CPP_TEST_SECURITY_H
+#include <string>
 
-#endif //CPP_TEST_SECURITY_H
+namespace Security {
+    bool isSecretKeyValid(const std::string& userSecretKey);
+}
+
+#endif

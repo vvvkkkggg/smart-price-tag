@@ -2,6 +2,7 @@
 #define SERVER_SMART_TAG_ENTITY_H
 
 #include <string>
+#include "json.hpp"
 
 class Entity {
 public:

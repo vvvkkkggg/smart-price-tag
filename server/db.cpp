@@ -21,13 +21,13 @@ Entity *buildFromQuery(SQLite::Statement &query) {
     );
 }
 
-std::vector<Entity *> DB::getAllEntities() {
-    std::vector<Entity *> results;
+std::vector<Entity> DB::getAllEntities() {
+    std::vector<Entity> results;
     SQLite::Statement query(db, "SELECT * FROM tags");
 
     while (query.executeStep()) {
         results.push_back(
-                buildFromQuery(query)
+                *buildFromQuery(query)
         );
     }
 

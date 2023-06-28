@@ -7,7 +7,7 @@
 namespace DB {
     int createEntitiesTableIfNotExist();
 
-    std::vector<Entity *> getAllEntities();
+    std::vector<Entity> getAllEntities();
 
     Entity *getEntityByScreen(int screenId);
 

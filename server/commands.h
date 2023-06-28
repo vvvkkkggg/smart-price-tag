@@ -4,7 +4,7 @@
 #include <string>
 
 enum Commands {
-    PING_SERVER,
+    GET_SERVER_STATUS,
     GET_TAGS_SCREENS,
     GET_TAGS_DATA,
     PUT_TAGS,

@@ -3,13 +3,14 @@
 
 SQLite::Database db("db.db3", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
 
-int createEntitiesTableIfNotExist() {
+int DB::createEntitiesTableIfNotExist() {
     return db.exec(
             "CREATE TABLE IF NOT EXISTS tags ("
             "id INTEGER PRIMARY KEY,"
-            "screenId INTEGER,"
+            "screenId TEXT,"
             "productName TEXT,"
-            "cost INTEGER"
+            "cost TEXT,"
+            "isSet INTEGER"
             ")");
 }
 
@@ -47,7 +48,7 @@ Entity *DB::getEntityByScreen(int screenId) {
 }
 
 int DB::insertEntity(const Entity &entity) {
-    SQLite::Statement query(db, "INSERT INTO tags VALUES (NULL, ?, ?, ?)");
+    SQLite::Statement query(db, "INSERT INTO tags VALUES (NULL, ?, ?, ?, 0)");
     query.bind(1, entity.screenId);
     query.bind(2, entity.productName);
     query.bind(3, entity.cost);
@@ -55,9 +56,16 @@ int DB::insertEntity(const Entity &entity) {
 }
 
 int DB::updateEntityByScreeId(const Entity &entity) {
-    SQLite::Statement query(db, R"(UPDATE tags SET productName="?", cost=? WHERE screenId=?)");
+    SQLite::Statement query(db, R"(UPDATE tags SET productName=?, cost=?, isSet=0 WHERE screenId=?)");
     query.bind(1, entity.productName);
     query.bind(2, entity.cost);
     query.bind(3, entity.screenId);
+    return query.exec();
+}
+
+int DB::updateScreenSetStatus(int screenId, int isSet) {
+    SQLite::Statement query(db, R"(UPDATE tags SET isSet=? WHERE screenId=?)");
+    query.bind(1, isSet);
+    query.bind(1, screenId);
     return query.exec();
 }

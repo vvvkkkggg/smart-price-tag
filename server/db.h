@@ -14,6 +14,8 @@ namespace DB {
     int insertEntity(const Entity &entity);
 
     int updateEntityByScreeId(const Entity &entity);
+
+    int updateScreenSetStatus(int screenId, int isSet);
 }
 
 #endif

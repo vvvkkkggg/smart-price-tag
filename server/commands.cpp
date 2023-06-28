@@ -3,12 +3,15 @@
 #include "commands.h"
 #include "db.h"
 
+
 nlohmann::json pingServer(const nlohmann::json &_) {
     return nlohmann::json{{"status", 200}};
 }
 
-void to_json(nlohmann::json& j, const Entity& e) {
-    j = {{"screenId", e.screenId}, {"productName", e.productName}, {"cost", e.cost}};
+void to_json(nlohmann::json &j, const Entity &e) {
+    j = {{"screenId",    e.screenId},
+         {"productName", e.productName},
+         {"cost",        e.cost}};
 }
 
 nlohmann::json getAllScreens(const nlohmann::json &_) {
@@ -29,22 +32,30 @@ nlohmann::json getAllTags(const nlohmann::json &_) {
 #include <iostream>
 
 nlohmann::json putTags(const nlohmann::json &jsonData) {
-    std::cout << jsonData["tags"];
+    auto tags = jsonData["tags"];
+    for (auto entity: tags) {
+        auto *e = new Entity(entity["screenId"], entity["productName"], entity["cost"]);
+        std::cout << e << std::endl;
+        if (!DB::updateEntityByScreeId(*e)) {
+            DB::insertEntity(*e);
+        }
+    }
+
     return nlohmann::json{{"status", 200}};
 }
 
 nlohmann::json switchTag(const nlohmann::json &jsonData) {
     std::string tagId = jsonData["tagId"];
-
-    return nlohmann::json{{"status", 200}, {"switch", 0}};
+    return nlohmann::json{{"status", 200},
+                          {"switch", 0}};
 }
 
 std::string Command::runCommand(const std::string &data) {
     nlohmann::json jsonData = nlohmann::json::parse(data);
 
-    std::unordered_map<int, std::function<nlohmann::json(const nlohmann::json &)>> commands {
+    std::unordered_map<int, std::function<nlohmann::json(const nlohmann::json &)>> commands{
             {Commands::GET_SERVER_STATUS, pingServer},
-            {Commands::GET_TAGS_SCREENS, getAllScreens},
+            {Commands::GET_TAGS_SCREENS,  getAllScreens},
             {Commands::GET_TAGS_DATA,     getAllTags},
             {Commands::PUT_TAGS,          putTags},
             {Commands::SWITCH_TAG,        switchTag},
@@ -57,5 +68,5 @@ std::string Command::runCommand(const std::string &data) {
         return nlohmann::json{{"status", 404}}.dump();
     }
 
-    return func->second(jsonData);
+    return func->second(jsonData).dump();
 }

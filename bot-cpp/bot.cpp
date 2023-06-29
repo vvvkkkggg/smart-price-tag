@@ -6,7 +6,7 @@
 // бд (с регой для сервера); второй поток, который обрабатывает запросы; csv парсер (видимо уже на сервере, чтобы не грузится)
 
 int main() {
-    TgBot::Bot bot("6144696073:AAERZzFet5rgILChIMfz_aEiQ05nXDI6Ab4");
+    TgBot::Bot bot("");
     BotHandler::initBotHandlers(bot);
 
     try {
